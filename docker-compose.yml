@@ -1,0 +1,47 @@
+# Перечень контейнеров
+services:
+  # Контейнер Selenoid — запускает браузеры для тестов
+  selenoid:
+    image: "aerokube/selenoid"
+    container_name: selenoid
+    # Порты для работы:
+    ports:
+      - "4444:4444"
+    # Настройка сети для взаимодействия контейнеров
+    networks:
+      - selenoid
+    # Подключённые volumes:
+    volumes:
+      - "./browsers.json:/etc/selenoid/browsers.json"    # настройки браузера, только для Docker Compose
+      - "/var/run/docker.sock:/var/run/docker.sock"
+    # Конфиг Selenoid и сеть, в которой он запускает браузеры:
+    command: ["-conf", "/etc/selenoid/browsers.json", "-container-network", "selenoid"]
+
+  # Контейнер с веб-интерфейсом Selenoid — смотреть тесты на http://localhost:8081
+  selenoid-ui:
+    image: "aerokube/selenoid-ui:latest"
+    container_name: selenoid-ui
+    ports:
+      - "8081:8080"
+    networks:
+      - selenoid
+    command: ["--selenoid-uri", "http://selenoid:4444"]
+
+  # Контейнер с тестами
+  test_docker:
+    build: .
+    container_name: tests
+    depends_on:
+      - selenoid
+    networks:
+      - selenoid
+    environment:
+      # Адрес Selenoid для фикстуры driver в conftest.py
+      - SELENOID_URI=http://selenoid:4444/wd/hub
+    volumes:
+      - "./allure_results:/app/allure_results"
+
+# Регистрация новой сети:
+networks:
+  selenoid:
+    name: selenoid
