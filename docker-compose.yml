@@ -2,7 +2,7 @@
 services:
   # Контейнер Selenoid — запускает браузеры для тестов
   selenoid:
-    image: "aerokube/selenoid"
+    image: "aerokube/selenoid:latest-release"
     container_name: selenoid
     # Порты для работы:
     ports:
@@ -16,6 +16,12 @@ services:
       - "/var/run/docker.sock:/var/run/docker.sock"
     # Конфиг Selenoid и сеть, в которой он запускает браузеры:
     command: ["-conf", "/etc/selenoid/browsers.json", "-container-network", "selenoid"]
+    # Считать контейнер здоровым, только когда Selenoid отвечает на запросы:
+    healthcheck:
+      test: ["CMD", "wget", "-q", "-O", "-", "http://localhost:4444/status"]
+      interval: 2s
+      timeout: 3s
+      retries: 15
 
   # Контейнер с веб-интерфейсом Selenoid — смотреть тесты на http://localhost:8081
   selenoid-ui:
@@ -31,8 +37,10 @@ services:
   test_docker:
     build: .
     container_name: tests
+    # Ждать не просто запуска Selenoid, а его готовности принимать тесты:
     depends_on:
-      - selenoid
+      selenoid:
+        condition: service_healthy
     networks:
       - selenoid
     environment:
