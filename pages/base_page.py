@@ -5,11 +5,11 @@ from selenium.webdriver.support.wait import WebDriverWait
 
 
 class BasePage:
-    TIMEOUT = 15
 
     def __init__(self, driver):
         self.driver = driver
-        self.wait = WebDriverWait(self.driver, self.TIMEOUT)
+        self.timeout = 15
+        self.wait = WebDriverWait(self.driver, self.timeout)
 
     @allure.step('Открыть страницу {url}')
     def open(self, url):

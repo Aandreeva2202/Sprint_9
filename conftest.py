@@ -4,7 +4,6 @@ import pytest
 from selenium import webdriver
 from selenium.webdriver.remote.command import Command
 from selenium.webdriver.remote.file_detector import LocalFileDetector
-
 from helpers import generate_recipe, generate_user
 from pages.create_recipe_page import CreateRecipePage
 from pages.main_page import MainPage
@@ -25,7 +24,11 @@ def driver():
         driver.file_detector = LocalFileDetector()
         driver.command_executor.add_command(Command.UPLOAD_FILE, 'POST', '/session/$sessionId/file')
     else:
-        driver = webdriver.Chrome()
+        options = webdriver.ChromeOptions()
+        if os.getenv('HEADLESS'):
+            options.add_argument('--headless=new')
+            options.add_argument('--window-size=1920,1080')
+        driver = webdriver.Chrome(options=options)
     yield driver
     driver.quit()
 
